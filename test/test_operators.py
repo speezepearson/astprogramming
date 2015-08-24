@@ -52,6 +52,20 @@ class TestOperator(unittest.TestCase):
     self.assertEqual('b', self.cls().call(DummyB()))
     self.assertEqual('ab', self.cls().call(DummyAB()))
 
+  def test_call__respects_operator_inheritance(self):
+    class OperatorVariant(self.cls):
+      pass
+
+    self.cls.set_method(DummyA, (lambda self, node: 'superA'))
+    self.assertEqual('superA', OperatorVariant().call(DummyA()))
+
+    OperatorVariant.set_method(DummyB, (lambda self, node: 'subB'))
+    self.assertEqual('superA', OperatorVariant().call(DummyA()))
+    self.assertEqual('subB', OperatorVariant().call(DummyB()))
+
+    OperatorVariant.set_method(DummyA, (lambda self, node: 'subA'))
+    self.assertEqual('subA', OperatorVariant().call(DummyA()))
+
   def test_def_method(self):
     @self.cls.def_method(DummyA)
     def f(self, node):

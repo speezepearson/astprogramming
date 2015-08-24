@@ -4,11 +4,11 @@ class TypeDict:
   def __init__(self):
     self.dict = {}
 
-  def __getitem__(self, key):
-    for cls in key.__mro__:
-      if cls in self.dict:
-        return self.dict[cls]
-    raise KeyError('neither {} nor any superclass in dict'.format(key.__name__))
+  def __getitem__(self, cls):
+    cls = self._closest_key(cls)
+    if cls is None:
+      raise KeyError('neither {} nor any superclass in dict'.format(key.__name__))
+    return self.dict[cls]
 
   def __setitem__(self, key, value):
     self.dict[key] = value
@@ -21,6 +21,16 @@ class TypeDict:
 
   def __len__(self, key):
     return len(self.dict)
+
+  def __contains__(self, cls):
+    return (self._closest_key(cls) is not None)
+
+  def _closest_key(self, cls):
+    for sup in cls.__mro__:
+      if sup in self.dict:
+        return sup
+    return None
+
 
 class Operator:
   @classmethod
@@ -40,14 +50,18 @@ class Operator:
       return function
     return decorate
 
+  @classmethod
+  def method_for_class(cls, node_class):
+    for sup in cls.__mro__:
+      if 'operator_methods' in vars(sup):
+        if node_class in sup.operator_methods:
+          return sup.operator_methods[node_class]
+    return None
+
   def call(self, node):
-    try:
-      method = self.operator_methods[type(node)]
-    except KeyError:
-      pass # raises TypeError; see comment below
-    else:
-      return method(self, node)
-    # I'd put this in the "except KeyError" block, but that obscures the traceback.
-    raise TypeError('no method for nodes of type {}'.format(type(node).__name__))
+    method = self.method_for_class(type(node))
+    if method is None:
+      raise TypeError('no method for nodes of type {}'.format(type(node).__name__))
+    return method(self, node)
 
 from .pythonizer import Pythonizer
