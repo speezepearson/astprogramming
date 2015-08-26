@@ -58,3 +58,25 @@ class TestASTNode(unittest.TestCase):
     class LooksLikeNumber(astprogramming.ASTNode):
       attribute_names = ('value',)
     self.assertNotEqual(Number(value=3), LooksLikeNumber(value=3))
+
+  def test_constructor_sets_parent(self):
+    l, r = Number(value=1), Number(value=2)
+    parent = Add(left=l, right=r)
+    self.assertEqual(parent, l.parent)
+    self.assertEqual(parent, r.parent)
+
+  def test_setting_child_sets_parent(self):
+    l, r = Number(value=1), Number(value=2)
+    parent = Add(left=l, right=r)
+    new = Number(value=3)
+
+    parent.left = new
+    self.assertIsNone(l.parent)
+    self.assertEqual(parent, new.parent)
+
+  def test_children(self):
+    self.assertEqual([], list(Number(value=3).children))
+    self.assertEqual([Number(value=3), Number(value=4)], list(Add(left=Number(value=3), right=Number(value=4)).children))
+
+  def test_children__skips_missing_children(self):
+    self.assertEqual([Number(value=3)], list(Add(left=None, right=Number(value=3)).children))
