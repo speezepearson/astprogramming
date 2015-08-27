@@ -65,3 +65,4 @@ class Operator:
     return method(self, node)
 
 from .pythonizer import Pythonizer
+from .pseudocode_generator import PseudocodeGenerator
